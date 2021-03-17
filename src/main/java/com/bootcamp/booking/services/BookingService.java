@@ -27,7 +27,7 @@ public class BookingService implements IBookingService {
 
     @Override
     public List<HotelDTO> getHotels(HotelParamsDTO params) throws DatesAfterBeforeException, BadRequestException, NotAvailabilityException, NoDestinationException {
-        if (notNullParams(params)) {
+        if (notNullHotelParams(params)) {
             if (validateDateFromBeforeTo(params.getDateFrom(), params.getDateTo())) {
                 return repository.getHotelsByDatesAndDestination(params);
             } else {
@@ -64,6 +64,8 @@ public class BookingService implements IBookingService {
                     response.setInterest((interest * 100) + "%");
                     response.setTotal(amount + amount * interest);
 
+                    response.getBooking().setPaymentMethod(null);//Para que no se muestre en el response.
+
                     StatusCodeDTO statusCode = new StatusCodeDTO();
                     statusCode.setCode(HttpStatus.OK.value());
                     statusCode.setMessage(HttpStatus.OK.toString());
@@ -75,14 +77,69 @@ public class BookingService implements IBookingService {
                     requestDTO.getBooking().getDateFrom(), requestDTO.getBooking().getDateTo());//Genero la lista nueva de fechas disponibles
             hotel.setAvailableDates(availableDates);//Se las seteo al hotel
         }
-
         return response;
     }
 
-    private boolean notNullParams(HotelParamsDTO params) throws BadRequestException {
+    @Override
+    public List<FlightDTO> getFlights(FlightParamsDTO params) throws DatesAfterBeforeException, NoDestinationException, NotAvailabilityException, BadRequestException {
+        if (notNullFlightParams(params)) {
+            if (validateDateFromBeforeTo(params.getDateFrom(), params.getDateTo())) {
+                return repository.getFlightsByDatesAndDestination(params);
+            } else {
+                throw new DatesAfterBeforeException();
+            }
+        } else {
+            return repository.getFlights();
+        }
+    }
+
+    @Override
+    public FlightResponseDTO flightReservation(FlightRequestDTO requestDTO) throws BadRequestException, EmailFormatException, DatesAfterBeforeException, NoDestinationException, PaymentException {
+        FlightDTO flight = repository.getFlightByCode(requestDTO.getFlightReservation().getFlightNumber());
+        FlightResponseDTO response = new FlightResponseDTO();
+
+        if (validateReservationPayLoad(requestDTO, flight)) {
+
+            if (flight.getDateFrom().equals(requestDTO.getFlightReservation().getDateFrom()) &
+                    flight.getDateTo().equals(requestDTO.getFlightReservation().getDateTo())) {
+
+                response.setUserName(requestDTO.getUserName());
+                response.setFlightReservation(requestDTO.getFlightReservation());
+
+                Double amount = requestDTO.getFlightReservation().getSeats() * flight.getPrice();
+
+                response.setAmount(amount);
+
+                Double interest = calculateInterest(requestDTO.getFlightReservation().getPaymentMethod());
+
+                response.setInterest((interest * 100) + "%");
+                response.setTotal(amount + amount * interest);
+
+                response.getFlightReservation().setPaymentMethod(null);//Para que no se muestre en el response.
+
+                StatusCodeDTO statusCode = new StatusCodeDTO();
+                statusCode.setCode(HttpStatus.OK.value());
+                statusCode.setMessage(HttpStatus.OK.toString());
+                response.setStatusCode(statusCode);
+            }
+        }
+        return response;
+    }
+
+    private boolean notNullHotelParams(HotelParamsDTO params) throws BadRequestException {
         if (params.getDateFrom() != null & params.getDateTo() != null & params.getDestination() != null)
             return true;
         else if (params.getDateFrom() == null & params.getDateTo() == null & params.getDestination() == null)
+            return false;
+        else {
+            throw new BadRequestException("Los datos ingresados no son válidos.");
+        }
+    }
+
+    private boolean notNullFlightParams(FlightParamsDTO params) throws BadRequestException {
+        if (params.getDateFrom() != null & params.getDateTo() != null & params.getOrigin() != null & params.getDestination() != null)
+            return true;
+        else if (params.getDateFrom() == null & params.getDateTo() == null & params.getOrigin() == null & params.getDestination() == null)
             return false;
         else {
             throw new BadRequestException("Los datos ingresados no son válidos.");
@@ -121,6 +178,35 @@ public class BookingService implements IBookingService {
         }
     }
 
+    private boolean validateReservationPayLoad(FlightRequestDTO request, FlightDTO flight) throws DatesAfterBeforeException, NoDestinationException, EmailFormatException, BadRequestException {
+        if (validateDateFromBeforeTo(request.getFlightReservation().getDateFrom(), request.getFlightReservation().getDateTo())) {
+            if (request.getFlightReservation().getOrigin().equals(flight.getOrigin()) &
+                    request.getFlightReservation().getDestination().equals(flight.getDestination())) {
+                if (request.getFlightReservation().getSeats().equals(request.getFlightReservation().getPeople().size())) {
+                    if (request.getFlightReservation().getSeatType().equalsIgnoreCase(flight.getSeatType())) {
+                        if (request.getFlightReservation().getSeats() <= 150) {
+                            if (validateEmail(request.getUserName())) {
+                                return true;
+                            } else {
+                                throw new EmailFormatException();
+                            }
+                        } else {
+                            throw new BadRequestException("La cantidad de asientos y personas sobrepasa la capacidad del vuelo.");
+                        }
+                    } else {
+                        throw new BadRequestException("Los datos del vuelo no coinciden con los datos almacenados en la base.");
+                    }
+                } else {
+                    throw new BadRequestException("La cantidad de personas no coincide con la cantidad de personas declaradas.");
+                }
+            } else {
+                throw new NoDestinationException();
+            }
+        } else {
+            throw new DatesAfterBeforeException();
+        }
+    }
+
     private boolean validateEmail(String email) {
         return EmailValidator.getInstance().isValid(email);
     }
@@ -145,7 +231,7 @@ public class BookingService implements IBookingService {
 
     private Double calculateInterest(PayMethodDTO payment) throws PaymentException {
         if (payment.getType().equalsIgnoreCase("debit")) {
-            if (payment.getDues() == 0) {
+            if (payment.getDues() == 1) {
                 return 0.0;
             } else {
                 throw new PaymentException("No se permite el pago en cuotas con tarjetas de débito.");

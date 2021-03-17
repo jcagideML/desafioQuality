@@ -24,7 +24,7 @@ import java.util.Locale;
 public class BookingRepository implements IBookingRepository {
 
     private final List<HotelDTO> hotels;
-    private List<FlightDTO> flights;
+    private final List<FlightDTO> flights;
     private List<PersonaDTO> people;
 
     @SuppressWarnings("all")
@@ -49,7 +49,7 @@ public class BookingRepository implements IBookingRepository {
         List<HotelDTO> result = new ArrayList<>(this.hotels);
         result.removeIf(h -> !h.getDestination().equals(params.getDestination()));
         if (!result.isEmpty()) {
-            result.removeIf(hotel -> !availible(hotel, params.getDateFrom(), params.getDateTo()));
+            result.removeIf(hotel -> !hotelAvailible(hotel, params.getDateFrom(), params.getDateTo()));
             if (!result.isEmpty()) {
                 return result;
             } else {
@@ -69,7 +69,38 @@ public class BookingRepository implements IBookingRepository {
         throw new BadRequestException("El código de hotel es incorrecto.");
     }
 
-    private boolean availible(HotelDTO hotel, Date from, Date to) {
+    @Override
+    public List<FlightDTO> getFlights() {
+        return this.flights;
+    }
+
+    @Override
+    public List<FlightDTO> getFlightsByDatesAndDestination(FlightParamsDTO params) throws NoDestinationException, NotAvailabilityException {
+        List<FlightDTO> result = new ArrayList<>(this.flights);
+        result.removeIf(f -> !f.getOrigin().equals(params.getOrigin()));
+        result.removeIf(f -> !f.getDestination().equals(params.getDestination()));
+        if (!result.isEmpty()) {
+            result.removeIf(flight -> !flightAvailible(flight, params.getDateFrom(), params.getDateTo()));
+            if (!result.isEmpty()) {
+                return result;
+            } else {
+                throw new NotAvailabilityException();
+            }
+        } else {
+            throw new NoDestinationException();
+        }
+    }
+
+    @Override
+    public FlightDTO getFlightByCode(String flightCode) throws BadRequestException {
+        for (FlightDTO f : flights) {
+            if (f.getFlightNumber().equals(flightCode))
+                return f;
+        }
+        throw new BadRequestException("El número de vuelo es incorrecto.");
+    }
+
+    private boolean hotelAvailible(HotelDTO hotel, Date from, Date to) {
         for (AvailableDTO dates : hotel.getAvailableDates()) {
             if ((dates.getDateFrom().before(from) | dates.getDateFrom().equals(from))
                     & (dates.getDateTo().after(to) | dates.getDateTo().equals(to))) {
@@ -77,6 +108,11 @@ public class BookingRepository implements IBookingRepository {
             }
         }
         return false;
+    }
+
+    private boolean flightAvailible(FlightDTO flight, Date from, Date to) {
+        return (flight.getDateFrom().before(from) | flight.getDateFrom().equals(from))
+                & (flight.getDateTo().after(to) | flight.getDateTo().equals(to));
     }
 
     @SuppressWarnings("unchecked")

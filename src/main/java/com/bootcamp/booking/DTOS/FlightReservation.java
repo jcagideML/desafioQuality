@@ -11,19 +11,19 @@ import java.util.List;
 
 @Getter
 @Setter
-public class BookingDTO {
-
+public class FlightReservation {
     @JsonFormat(pattern = "dd/MM/yyyy", timezone = "America/Buenos_Aires")
     @DateTimeFormat(pattern = "dd/MM/yyyy")
     private Date dateFrom;
     @JsonFormat(pattern = "dd/MM/yyyy", timezone = "America/Buenos_Aires")
     @DateTimeFormat(pattern = "dd/MM/yyyy")
     private Date dateTo;
+    private String origin;
     private String destination;
-    private String hotelCode;
-    private Integer peopleAmount;
-    private String roomType;
-    List<PersonaDTO> people;
+    private String flightNumber;
+    private Integer seats;
+    private String seatType;
+    private List<PersonaDTO> people;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private PayMethodDTO paymentMethod;
 }

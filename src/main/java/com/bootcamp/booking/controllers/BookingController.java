@@ -28,10 +28,16 @@ public class BookingController {
 
     }
 
-    //@GetMapping(value = "/api/v1/flights")
-    //public List<FlightDTO> getFlights(FligthParamsDTO params){
+    @GetMapping(value = "/api/v1/flights")
+    public List<FlightDTO> getFlights(FlightParamsDTO params) throws DatesAfterBeforeException, BadRequestException, NoDestinationException, NotAvailabilityException {
+        return bookingService.getFlights(params);
+    }
 
-    //}
+    @PostMapping(value = "/api/v1/flight-reservation")
+    public FlightResponseDTO booking(@RequestBody FlightRequestDTO request) throws DatesAfterBeforeException, BadRequestException, NoDestinationException, TypeOfRoomException, EmailFormatException, PaymentException {
+        return bookingService.flightReservation(request);
+
+    }
 
     @ExceptionHandler(BookingException.class)
     public ResponseEntity<ErrorDTO> handleException(BookingException exception) {
