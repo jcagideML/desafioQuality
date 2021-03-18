@@ -39,10 +39,12 @@ public class BookingService implements IBookingService {
     }
 
     @Override
-    public HotelResponseDTO booking(HotelRequestDTO requestDTO) throws BadRequestException, DatesAfterBeforeException, NoDestinationException, EmailFormatException, TypeOfRoomException, PaymentException {
+    public HotelResponseDTO booking(HotelRequestDTO requestDTO) throws BadRequestException, DatesAfterBeforeException, NoDestinationException, EmailFormatException, TypeOfRoomException, PaymentException, NotAvailabilityException {
 
         HotelDTO hotel = repository.getHotelByCode(requestDTO.getBooking().getHotelCode()); //Obtengo el Hotel por su código.
         HotelResponseDTO response = new HotelResponseDTO();
+        response.setUserName(requestDTO.getUserName());
+        response.setBooking(requestDTO.getBooking());
 
         if (validateBookingPayload(requestDTO, hotel)) { //Valido la mayoría de los parametros (No metodo de pago ni fecha de reserva)
             AvailableDTO aux = null; //Lo uso para luego generar las fechas sin reserva
@@ -51,9 +53,6 @@ public class BookingService implements IBookingService {
                 if ((dates.getDateFrom().before(requestDTO.getBooking().getDateFrom()) | dates.getDateFrom().equals(requestDTO.getBooking().getDateFrom()))
                         & (dates.getDateTo().after(requestDTO.getBooking().getDateTo()) | dates.getDateTo().equals(requestDTO.getBooking().getDateTo()))) {
                     aux = dates;
-
-                    response.setUserName(requestDTO.getUserName());
-                    response.setBooking(requestDTO.getBooking());
 
                     Double amount = getCantDays(requestDTO.getBooking().getDateFrom(), requestDTO.getBooking().getDateTo()) * hotel.getPrice();
 
@@ -64,18 +63,20 @@ public class BookingService implements IBookingService {
                     response.setInterest((interest * 100) + "%");
                     response.setTotal(amount + amount * interest);
 
-                    response.getBooking().setPaymentMethod(null);//Para que no se muestre en el response.
-
                     StatusCodeDTO statusCode = new StatusCodeDTO();
                     statusCode.setCode(HttpStatus.OK.value());
                     statusCode.setMessage(HttpStatus.OK.toString());
                     response.setStatusCode(statusCode);
                 }
             }
-            hotel.getAvailableDates().remove(aux);//Quito las fechas que reservaron
-            List<AvailableDTO> availableDates = generateAvailableDates(hotel, aux,
-                    requestDTO.getBooking().getDateFrom(), requestDTO.getBooking().getDateTo());//Genero la lista nueva de fechas disponibles
-            hotel.setAvailableDates(availableDates);//Se las seteo al hotel
+            if (aux != null) {
+                hotel.getAvailableDates().remove(aux);//Quito las fechas que reservaron
+                List<AvailableDTO> availableDates = generateAvailableDates(hotel, aux,
+                        requestDTO.getBooking().getDateFrom(), requestDTO.getBooking().getDateTo());//Genero la lista nueva de fechas disponibles
+                hotel.setAvailableDates(availableDates);//Se las seteo al hotel
+            } else {
+                throw new NotAvailabilityException();
+            }
         }
         return response;
     }
@@ -94,7 +95,7 @@ public class BookingService implements IBookingService {
     }
 
     @Override
-    public FlightResponseDTO flightReservation(FlightRequestDTO requestDTO) throws BadRequestException, EmailFormatException, DatesAfterBeforeException, NoDestinationException, PaymentException {
+    public FlightResponseDTO flightReservation(FlightRequestDTO requestDTO) throws BadRequestException, EmailFormatException, DatesAfterBeforeException, NoDestinationException, PaymentException, NotAvailabilityException {
         FlightDTO flight = repository.getFlightByCode(requestDTO.getFlightReservation().getFlightNumber());
         FlightResponseDTO response = new FlightResponseDTO();
 
@@ -121,7 +122,8 @@ public class BookingService implements IBookingService {
                 statusCode.setCode(HttpStatus.OK.value());
                 statusCode.setMessage(HttpStatus.OK.toString());
                 response.setStatusCode(statusCode);
-            }
+            } else
+                throw new NotAvailabilityException();
         }
         return response;
     }

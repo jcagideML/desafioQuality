@@ -23,7 +23,7 @@ public class BookingController {
     }
 
     @PostMapping(value = "/api/v1/booking")
-    public HotelResponseDTO booking(@RequestBody HotelRequestDTO request) throws DatesAfterBeforeException, BadRequestException, NoDestinationException, TypeOfRoomException, EmailFormatException, PaymentException {
+    public HotelResponseDTO booking(@RequestBody HotelRequestDTO request) throws DatesAfterBeforeException, BadRequestException, NoDestinationException, TypeOfRoomException, EmailFormatException, PaymentException, NotAvailabilityException {
         return bookingService.booking(request);
 
     }
@@ -34,14 +34,13 @@ public class BookingController {
     }
 
     @PostMapping(value = "/api/v1/flight-reservation")
-    public FlightResponseDTO booking(@RequestBody FlightRequestDTO request) throws DatesAfterBeforeException, BadRequestException, NoDestinationException, TypeOfRoomException, EmailFormatException, PaymentException {
+    public FlightResponseDTO flightReservation(@RequestBody FlightRequestDTO request) throws DatesAfterBeforeException, BadRequestException, NoDestinationException, TypeOfRoomException, EmailFormatException, PaymentException, NotAvailabilityException {
         return bookingService.flightReservation(request);
 
     }
 
     @ExceptionHandler(BookingException.class)
     public ResponseEntity<ErrorDTO> handleException(BookingException exception) {
-        exception.printStackTrace();
         return new ResponseEntity<>(exception.getError(), exception.getStatus());
     }
 
@@ -50,7 +49,6 @@ public class BookingController {
         ErrorDTO error = new ErrorDTO();
         error.setName("Internal server error.");
         error.setDescription("Un error en el servidor provocó que se detuviera la ejecución. Contactese con soporte.");
-        exception.printStackTrace();
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
