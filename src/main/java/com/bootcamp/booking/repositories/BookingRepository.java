@@ -62,9 +62,11 @@ public class BookingRepository implements IBookingRepository {
 
     @Override
     public HotelDTO getHotelByCode(String hotelCode) throws BadRequestException {
-        for (HotelDTO h : hotels) {
-            if (h.getHotelCode().equals(hotelCode))
-                return h;
+        if (hotelCode != null) {
+            for (HotelDTO h : hotels) {
+                if (h.getHotelCode().equals(hotelCode))
+                    return h;
+            }
         }
         throw new BadRequestException("El código de hotel es incorrecto.");
     }

@@ -1,6 +1,7 @@
 package com.bootcamp.booking.DTOS;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -9,6 +10,7 @@ import java.util.Date;
 
 @Getter
 @Setter
+@EqualsAndHashCode
 public class FlightDTO {
 
     private String flightNumber;
@@ -22,17 +24,4 @@ public class FlightDTO {
     @JsonFormat(pattern = "dd/MM/yyyy", timezone = "America/Buenos_Aires")
     @DateTimeFormat(pattern = "dd/MM/yyyy")
     private Date dateTo;
-
-    public FlightDTO() {
-    }
-
-    public FlightDTO(String flightNumber, String origin, String destination, String seatType, Double price, Date dateFrom, Date dateTo) {
-        setFlightNumber(flightNumber);
-        setOrigin(origin);
-        setDestination(destination);
-        setSeatType(seatType);
-        setPrice(price);
-        setDateFrom(dateFrom);
-        setDateTo(dateTo);
-    }
 }

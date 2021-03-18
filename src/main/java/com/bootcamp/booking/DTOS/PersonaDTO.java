@@ -17,15 +17,4 @@ public class PersonaDTO {
     @DateTimeFormat(pattern = "dd/MM/yyyy")
     private Date birthDate;
     private String mail;
-
-    public PersonaDTO() {
-    }
-
-    public PersonaDTO(Integer dni, String name, String lastname, Date birthDate, String mail) {
-        setDni(dni);
-        setName(name);
-        setLastname(lastname);
-        setBirthDate(birthDate);
-        setMail(mail);
-    }
 }
