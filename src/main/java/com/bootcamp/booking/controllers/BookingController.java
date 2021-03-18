@@ -6,6 +6,7 @@ import com.bootcamp.booking.services.IBookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -79,5 +80,14 @@ public class BookingController {
         error.setName("Internal server error.");
         error.setDescription("Un error en el servidor provocó que se detuviera la ejecución. Contactese con soporte.");
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorDTO> handleFormatException(HttpMessageNotReadableException exception) {
+        exception.printStackTrace();
+        ErrorDTO error = new ErrorDTO();
+        error.setName("Format Exception.");
+        error.setDescription("El formato de la fecha debe respetar la forma dd/mm/aaaa.");
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 }

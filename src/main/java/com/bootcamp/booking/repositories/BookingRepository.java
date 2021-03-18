@@ -25,7 +25,7 @@ public class BookingRepository implements IBookingRepository {
 
     private final List<HotelDTO> hotels;
     private final List<FlightDTO> flights;
-    private List<PersonaDTO> people;
+    private List<PersonDTO> people;
 
     @SuppressWarnings("all")
     public BookingRepository() {
@@ -191,8 +191,8 @@ public class BookingRepository implements IBookingRepository {
     }
 
     @SuppressWarnings("unchecked")
-    public static List<PersonaDTO> getPeopleFromJSON(String path) {
-        List<PersonaDTO> people = new ArrayList<>();
+    public static List<PersonDTO> getPeopleFromJSON(String path) {
+        List<PersonDTO> people = new ArrayList<>();
         FileReader reader;
         File file;
         try {
@@ -202,7 +202,7 @@ public class BookingRepository implements IBookingRepository {
             JSONArray jsonArray = (JSONArray) jsonParser.parse(reader);
 
             for (JSONObject jo : (Iterable<JSONObject>) jsonArray) {
-                PersonaDTO p = new PersonaDTO();
+                PersonDTO p = new PersonDTO();
                 p.setDni(getDni((String) jo.get("DNI")));
                 p.setName((String) jo.get("Nombre"));
                 p.setLastname((String) jo.get("Apellido"));

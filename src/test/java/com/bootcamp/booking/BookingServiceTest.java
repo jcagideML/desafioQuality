@@ -68,9 +68,9 @@ public class BookingServiceTest {
         booking.setHotelCode("CH-0002");
         booking.setRoomType("DOUBLE");
         booking.setPeopleAmount(2);
-        List<PersonaDTO> people = new ArrayList<>();
-        people.add(new PersonaDTO());
-        people.add(new PersonaDTO());
+        List<PersonDTO> people = new ArrayList<>();
+        people.add(new PersonDTO());
+        people.add(new PersonDTO());
         booking.setPeople(people);
         PayMethodDTO payment = new PayMethodDTO();
         payment.setType("CREDIT");
@@ -119,9 +119,9 @@ public class BookingServiceTest {
         reservation.setFlightNumber("BAPI-1235");
         reservation.setSeatType("Economy");
         reservation.setSeats(2);
-        List<PersonaDTO> people = new ArrayList<>();
-        people.add(new PersonaDTO());
-        people.add(new PersonaDTO());
+        List<PersonDTO> people = new ArrayList<>();
+        people.add(new PersonDTO());
+        people.add(new PersonDTO());
         reservation.setPeople(people);
         PayMethodDTO payment = new PayMethodDTO();
         payment.setType("CREDIT");
