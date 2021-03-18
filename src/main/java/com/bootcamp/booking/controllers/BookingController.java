@@ -24,8 +24,10 @@ public class BookingController {
 
     @PostMapping(value = "/api/v1/booking")
     public HotelResponseDTO booking(@RequestBody HotelRequestDTO request) throws DatesAfterBeforeException, BadRequestException, NoDestinationException, TypeOfRoomException, EmailFormatException, PaymentException, NotAvailabilityException {
-        return bookingService.booking(request);
-
+        if (notNullBookingParams(request))
+            return bookingService.booking(request);
+        else
+            throw new BadRequestException("Algunos de los datos ingresados esta vacío o erroneo.");
     }
 
     @GetMapping(value = "/api/v1/flights")
@@ -35,8 +37,34 @@ public class BookingController {
 
     @PostMapping(value = "/api/v1/flight-reservation")
     public FlightResponseDTO flightReservation(@RequestBody FlightRequestDTO request) throws DatesAfterBeforeException, BadRequestException, NoDestinationException, TypeOfRoomException, EmailFormatException, PaymentException, NotAvailabilityException {
-        return bookingService.flightReservation(request);
+        if (notNullReservationParams(request))
+            return bookingService.flightReservation(request);
+        else
+            throw new BadRequestException("Algunos de los datos ingresados esta vacío o erroneo.");
+    }
 
+    private boolean notNullBookingParams(HotelRequestDTO r) {
+        if (r.getUserName() != null & r.getBooking() != null) {
+            if (r.getBooking().getDateFrom() != null & r.getBooking().getDateTo() != null & r.getBooking().getDestination() != null
+                    & r.getBooking().getHotelCode() != null & r.getBooking().getPeopleAmount() != null & r.getBooking().getPeople() != null
+                    & r.getBooking().getRoomType() != null & r.getBooking().getPaymentMethod() != null) {
+                return r.getBooking().getPaymentMethod().getNumber() != null & r.getBooking().getPaymentMethod().getType() != null
+                        & r.getBooking().getPaymentMethod().getDues() != null;
+            }
+        }
+        return false;
+    }
+
+    private boolean notNullReservationParams(FlightRequestDTO r) {
+        if (r.getUserName() != null & r.getFlightReservation() != null) {
+            if (r.getFlightReservation().getDateFrom() != null & r.getFlightReservation().getDateTo() != null & r.getFlightReservation().getFlightNumber() != null &
+                    r.getFlightReservation().getOrigin() != null & r.getFlightReservation().getDestination() != null & r.getFlightReservation().getSeats() != null &
+                    r.getFlightReservation().getSeatType() != null & r.getFlightReservation().getPeople() != null & r.getFlightReservation().getPaymentMethod() != null) {
+                return r.getFlightReservation().getPaymentMethod().getNumber() != null & r.getFlightReservation().getPaymentMethod().getType() != null
+                        & r.getFlightReservation().getPaymentMethod().getDues() != null;
+            }
+        }
+        return false;
     }
 
     @ExceptionHandler(BookingException.class)
@@ -46,6 +74,7 @@ public class BookingController {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorDTO> handleRunTimeException(RuntimeException exception) {
+        exception.printStackTrace();
         ErrorDTO error = new ErrorDTO();
         error.setName("Internal server error.");
         error.setDescription("Un error en el servidor provocó que se detuviera la ejecución. Contactese con soporte.");

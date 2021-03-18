@@ -105,7 +105,7 @@ public class BookingService implements IBookingService {
                     flight.getDateTo().equals(requestDTO.getFlightReservation().getDateTo())) {
 
                 response.setUserName(requestDTO.getUserName());
-                response.setFlightReservation(requestDTO.getFlightReservation());
+                response.setFlightReservationDTO(requestDTO.getFlightReservation());
 
                 Double amount = requestDTO.getFlightReservation().getSeats() * flight.getPrice();
 
@@ -116,7 +116,7 @@ public class BookingService implements IBookingService {
                 response.setInterest((interest * 100) + "%");
                 response.setTotal(amount + amount * interest);
 
-                response.getFlightReservation().setPaymentMethod(null);//Para que no se muestre en el response.
+                response.getFlightReservationDTO().setPaymentMethod(null);//Para que no se muestre en el response.
 
                 StatusCodeDTO statusCode = new StatusCodeDTO();
                 statusCode.setCode(HttpStatus.OK.value());
@@ -153,60 +153,48 @@ public class BookingService implements IBookingService {
     }
 
     private boolean validateBookingPayload(HotelRequestDTO request, HotelDTO hotel) throws NoDestinationException, DatesAfterBeforeException, BadRequestException, TypeOfRoomException, EmailFormatException {
-        if (validateDateFromBeforeTo(request.getBooking().getDateFrom(), request.getBooking().getDateTo())) {
-            if (request.getBooking().getDestination().equals(hotel.getDestination())) {
-                if (request.getBooking().getPeopleAmount().equals(request.getBooking().getPeople().size())) {
-                    if (request.getBooking().getRoomType().equalsIgnoreCase(hotel.getRoomType())) {
-                        if (request.getBooking().getPeopleAmount() <= getSizeOfRoom(hotel.getRoomType())) {
-                            if (validateEmail(request.getUserName())) {
-                                return true;
-                            } else {
-                                throw new EmailFormatException();
-                            }
-                        } else {
-                            throw new TypeOfRoomException();
-                        }
-                    } else {
-                        throw new BadRequestException("Los datos del hotel no coinciden con los datos almacenados en la base de datos.");
-                    }
-                } else {
-                    throw new BadRequestException("La cantidad de personas no coincide con la cantidad de personas declaradas.");
-                }
-            } else {
-                throw new NoDestinationException();
-            }
-        } else {
+        if (!validateDateFromBeforeTo(request.getBooking().getDateFrom(), request.getBooking().getDateTo())) {
             throw new DatesAfterBeforeException();
         }
+        if (!request.getBooking().getDestination().equals(hotel.getDestination())) {
+            throw new NoDestinationException();
+        }
+        if (!request.getBooking().getPeopleAmount().equals(request.getBooking().getPeople().size())) {
+            throw new BadRequestException("La cantidad de personas no coincide con la cantidad de personas declaradas.");
+        }
+        if (!request.getBooking().getRoomType().equalsIgnoreCase(hotel.getRoomType())) {
+            throw new BadRequestException("Los datos del hotel no coinciden con los datos almacenados en la base de datos.");
+        }
+        if (request.getBooking().getPeopleAmount() > getSizeOfRoom(hotel.getRoomType())) {
+            throw new TypeOfRoomException();
+        }
+        if (!validateEmail(request.getUserName())) {
+            throw new EmailFormatException();
+        }
+        return true;
     }
 
     private boolean validateReservationPayLoad(FlightRequestDTO request, FlightDTO flight) throws DatesAfterBeforeException, NoDestinationException, EmailFormatException, BadRequestException {
-        if (validateDateFromBeforeTo(request.getFlightReservation().getDateFrom(), request.getFlightReservation().getDateTo())) {
-            if (request.getFlightReservation().getOrigin().equals(flight.getOrigin()) &
-                    request.getFlightReservation().getDestination().equals(flight.getDestination())) {
-                if (request.getFlightReservation().getSeats().equals(request.getFlightReservation().getPeople().size())) {
-                    if (request.getFlightReservation().getSeatType().equalsIgnoreCase(flight.getSeatType())) {
-                        if (request.getFlightReservation().getSeats() <= 150) {
-                            if (validateEmail(request.getUserName())) {
-                                return true;
-                            } else {
-                                throw new EmailFormatException();
-                            }
-                        } else {
-                            throw new BadRequestException("La cantidad de asientos y personas sobrepasa la capacidad del vuelo.");
-                        }
-                    } else {
-                        throw new BadRequestException("Los datos del vuelo no coinciden con los datos almacenados en la base.");
-                    }
-                } else {
-                    throw new BadRequestException("La cantidad de personas no coincide con la cantidad de personas declaradas.");
-                }
-            } else {
-                throw new NoDestinationException();
-            }
-        } else {
+        if (!validateDateFromBeforeTo(request.getFlightReservation().getDateFrom(), request.getFlightReservation().getDateTo())) {
             throw new DatesAfterBeforeException();
         }
+        if (!request.getFlightReservation().getOrigin().equals(flight.getOrigin()) |
+                !request.getFlightReservation().getDestination().equals(flight.getDestination())) {
+            throw new NoDestinationException();
+        }
+        if (!request.getFlightReservation().getSeats().equals(request.getFlightReservation().getPeople().size())) {
+            throw new BadRequestException("La cantidad de personas no coincide con la cantidad de personas declaradas.");
+        }
+        if (!request.getFlightReservation().getSeatType().equalsIgnoreCase(flight.getSeatType())) {
+            throw new BadRequestException("Los datos del vuelo no coinciden con los datos almacenados en la base.");
+        }
+        if (request.getFlightReservation().getSeats() > 150) {
+            throw new BadRequestException("La cantidad de asientos y personas sobrepasa la capacidad del vuelo.");
+        }
+        if (!validateEmail(request.getUserName())) {
+            throw new EmailFormatException();
+        }
+        return true;
     }
 
     private boolean validateEmail(String email) {

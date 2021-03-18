@@ -8,5 +8,5 @@ import lombok.Setter;
 public class FlightRequestDTO {
 
     private String userName;
-    private FlightReservation flightReservation;
+    private FlightReservationDTO flightReservation;
 }
